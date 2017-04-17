@@ -2,7 +2,6 @@
 Predicting P2P investors' future investment features with RNN
 """
 from pathlib import Path
-
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import normalize
