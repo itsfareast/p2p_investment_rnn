@@ -31,7 +31,7 @@ features_labels = [
     "amount_requested"
 ]
 
-def load_data(file_name="./data/"):
+def load_data(file_name="./data/Investor_Session_Feature"):
     """
     load data from raw feature file to pandas dataframe structure
     """
@@ -46,10 +46,12 @@ def load_data(file_name="./data/"):
                 user_feature_dict['user_id'] = user_id
                 user_feature_dict['time_step'] = time_step
                 for feature_cat_id, user_onetime_each_feature in enumerate(user_onetime_features):
-                    user_feature_dict[features_labels[feature_cat_id]] = np.array(user_onetime_each_feature.split(';'))
-            all_user_records.append(user_feature_dict)
+                    user_feature_dict[features_labels[feature_cat_id]] = np.array(user_onetime_each_feature.strip().split(';'), dtype=np.float)
+                all_user_records.append(user_feature_dict)
     
     df = pd.DataFrame.from_records(all_user_records)
+    df.info()
+    print(df.tail())
     return df
 
 
@@ -60,7 +62,7 @@ def create_X_Y(df):
     current_user_id = df.loc[0]['user_id']
     X = []
     X_instance = []
-    for _, df_rec in df.iterrows:
+    for _, df_rec in df.iterrows():
         tmp_user_id = df_rec['user_id']
         if current_user_id != tmp_user_id:
             X.append(X_instance)
@@ -107,7 +109,7 @@ def build_rnn_structure(input_shape, n_channels=256, rnn_unit=recurrent_layer.GR
     our_model.add(rnn_unit(units=n_channels, activation='relu', return_sequences=False))
     our_model.add(Dense(n_channels, activation='relu'))
     our_model.add(Dropout(0.2))
-    our_model.add(Dense(input_shape[-1], activation='softmax'))
+    our_model.add(Dense(input_shape[-1], activation='sigmoid'))
     our_model.compile(loss=loss_invest_vec_mse, optimizer='adam')
 
     return our_model
@@ -174,8 +176,8 @@ def cross_validataion_rnn(X, Y, rnn_builder=build_rnn_structure, K=5):
     Y_pred = np.zeros(Y.shape)
     for train, test in k_fold.split(X, Y):
         rnn_model = rnn_builder((X.shape[1], X.shape[2]))
-        early_stop = EarlyStopping(monitor='val_loss', patience=2)
-        rnn_model.fit(X[train], Y[train], batch_size=32, epochs=20, verbose=1, validation_data=(X[test], Y[test]), callbacks=[early_stop])
+        # early_stop = EarlyStopping(monitor='val_loss', patience=2)
+        rnn_model.fit(X[train], Y[train], batch_size=32, epochs=10, verbose=1, validation_data=(X[test], Y[test]))
         Y_pred[test] = rnn_model.predict(X[test])
 
     return Y_pred
@@ -183,9 +185,11 @@ def cross_validataion_rnn(X, Y, rnn_builder=build_rnn_structure, K=5):
 
 if __name__ == "__main__":
     p2p_X, p2p_Y = load_training_X_Y()
+    print(p2p_X[0])
+    print(p2p_Y[0])
+    cross_validataion_rnn(p2p_X, p2p_Y)
     global_mean(p2p_X, p2p_Y)
     personal_mean(p2p_X, p2p_Y)
     for k in range(1, 6):
         personal_k_nearest_mean(p2p_X, p2p_Y, k)
-    cross_validataion_rnn(p2p_X, p2p_Y)
     
