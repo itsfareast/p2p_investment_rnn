@@ -31,7 +31,7 @@ features_labels = [
     "amount_requested"
 ]
 
-def load_data(file_name=""):
+def load_data(file_name="./data/"):
     """
     load data from raw feature file to pandas dataframe structure
     """
