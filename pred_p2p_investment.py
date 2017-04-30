@@ -167,6 +167,8 @@ def personal_k_nearest_mean(X, Y, k_near):
     return personal_near_k_mean_Y, mse
 
 
+
+
 def time_series_validation_rnn(X, Y, rnn_builder=build_rnn_structure):
     """
     training on previous timeslots' profile to predict the next timeslot
