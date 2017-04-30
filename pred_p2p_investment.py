@@ -10,7 +10,6 @@ from keras.models import Sequential
 from keras import backend
 from keras.layers.core import Dense, Dropout
 import keras.layers.recurrent as recurrent_layer
-from keras.callbacks import EarlyStopping
 
 
 features_labels = [
@@ -168,28 +167,51 @@ def personal_k_nearest_mean(X, Y, k_near):
     return personal_near_k_mean_Y, mse
 
 
+def time_series_validation_rnn(X, Y, rnn_builder=build_rnn_structure):
+    """
+    training on previous timeslots' profile to predict the next timeslot
+    """
+    train_X = X[:, :-1, :]
+    train_Y = X[:, -1, :]
+    test_X = X[:, 1:, :]
+    test_Y = Y
+    rnn_model = rnn_builder((train_X.shape[1], train_X.shape[2]))
+    rnn_model.fit(train_X, train_Y, batch_size=32, epochs=10, verbose=1, validation_data=(test_X, test_Y))
+    Y_pred = rnn_model.predict(test_X)
+    
+    mse = np.mean(np.square(Y - Y_pred))
+    print("rnn's mean squared error: {}".format(mse))
+
+    return Y_pred
+
+
 def cross_validataion_rnn(X, Y, rnn_builder=build_rnn_structure, K=5):
     """
     cross validation on RNN
     """
-    k_fold = KFold(K)
     Y_pred = np.zeros(Y.shape)
+    k_fold = KFold(K)    
     for train, test in k_fold.split(X, Y):
         rnn_model = rnn_builder((X.shape[1], X.shape[2]))
-        # early_stop = EarlyStopping(monitor='val_loss', patience=2)
         rnn_model.fit(X[train], Y[train], batch_size=32, epochs=10, verbose=1, validation_data=(X[test], Y[test]))
         Y_pred[test] = rnn_model.predict(X[test])
+    
+    mse = np.mean(np.square(Y - Y_pred))
+    print("rnn's mean squared error: {}".format(mse))
 
     return Y_pred
 
 
 if __name__ == "__main__":
+
     p2p_X, p2p_Y = load_training_X_Y()
-    print(p2p_X[0])
-    print(p2p_Y[0])
-    cross_validataion_rnn(p2p_X, p2p_Y)
-    global_mean(p2p_X, p2p_Y)
-    personal_mean(p2p_X, p2p_Y)
-    for k in range(1, 6):
-        personal_k_nearest_mean(p2p_X, p2p_Y, k)
+
+    for i in range(4, 13, 2):
+        print("====={} slots as training=====".format(i))
+        slice_p2p_X = p2p_X[:, 12-i:]
+        time_series_validation_rnn(slice_p2p_X, p2p_Y)
+        # global_mean(p2p_X, p2p_Y)
+        personal_mean(slice_p2p_X, p2p_Y)
+        for k in range(1, 4):
+            personal_k_nearest_mean(slice_p2p_X, p2p_Y, k)
     
