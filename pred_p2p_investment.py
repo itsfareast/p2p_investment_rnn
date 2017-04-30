@@ -193,7 +193,7 @@ def time_series_validation_rnn(X, Y, rnn_builder=build_rnn_structure):
     test_X = X[:, 1:, :]
     test_Y = Y
     rnn_model = rnn_builder((train_X.shape[1], train_X.shape[2]))
-    rnn_model.fit(train_X, train_Y, batch_size=16, epochs=20, verbose=1, validation_data=(test_X, test_Y))
+    rnn_model.fit(train_X, train_Y, batch_size=32, epochs=10, verbose=1, validation_data=(test_X, test_Y))
     Y_pred = rnn_model.predict(test_X)
     
     mse = np.mean(np.square(Y - Y_pred))
