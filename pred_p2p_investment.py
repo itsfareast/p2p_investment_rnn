@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import normalize
 from sklearn.model_selection import KFold
+from sklearn.linear_model import LinearRegression
 from keras.models import Sequential
 from keras import backend
 from keras.layers.core import Dense, Dropout
@@ -167,6 +168,20 @@ def personal_k_nearest_mean(X, Y, k_near):
     return personal_near_k_mean_Y, mse
 
 
+def vector_ar(X, Y):
+    """
+    vector autoregressive model to predict Y
+    """
+    lr = LinearRegression()
+    train_X = X[:, :-1, :]
+    test_X = X[:, 1:, :]
+    train_Y = X[:, -1, :]
+    
+    lr.fit(train_X, train_Y)
+    pred_Y = lr.predict(test_X)
+    mse = np.mean(np.square(Y - pred_Y))
+    print("VAR's mean squared error: {}".format(mse))
+    return pred_Y, mse
 
 
 def time_series_validation_rnn(X, Y, rnn_builder=build_rnn_structure):
@@ -214,6 +229,7 @@ if __name__ == "__main__":
         time_series_validation_rnn(slice_p2p_X, p2p_Y)
         # global_mean(p2p_X, p2p_Y)
         personal_mean(slice_p2p_X, p2p_Y)
+        vector_ar(slice_p2p_X, p2p_Y)
         for k in range(1, 4):
             personal_k_nearest_mean(slice_p2p_X, p2p_Y, k)
     
