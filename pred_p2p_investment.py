@@ -176,9 +176,11 @@ def vector_ar(X, Y):
     train_X = X[:, :-1, :]
     test_X = X[:, 1:, :]
     train_Y = X[:, -1, :]
-    
-    lr.fit(train_X, train_Y)
-    pred_Y = lr.predict(test_X)
+    pred_Y = np.zeros(Y.shape)
+
+    for i in range(Y.shape[1]):
+        lr.fit(train_X[:, :, i], train_Y[:, i])
+        pred_Y[:, i] = lr.predict(test_X[:, :, i])
     mse = np.mean(np.square(Y - pred_Y))
     print("VAR's mean squared error: {}".format(mse))
     return pred_Y, mse
